@@ -9,7 +9,7 @@ before:
   hooks:
     - go mod tidy
 #    - docker login
-    - echo "$GITHUB_TOKEN" | docker login docker.pkg.github.com -u khorevaa --password-stdin
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -36,9 +36,9 @@ changelog:
       - Merge branch
 dockers:
   - image_templates:
-      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:{{ .Tag }}'
-      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:v{{ .Major }}.{{ .Minor }}'
-      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:latest'
+      - 'ghcr.io/khorevaa/{{.ProjectName}}:{{ .Tag }}'
+      - 'ghcr.io/khorevaa/{{.ProjectName}}:v{{ .Major }}.{{ .Minor }}'
+      - 'ghcr.io/khorevaa/{{.ProjectName}}:latest'
     dockerfile: Dockerfile
     binaries:
       - unihexp
