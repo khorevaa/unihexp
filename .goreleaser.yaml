@@ -32,6 +32,25 @@ changelog:
       - '^test:'
       - Merge pull request
       - Merge branch
+dockers:
+  - image_templates:
+      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:{{ .Tag }}'
+      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:v{{ .Major }}.{{ .Minor }}'
+      - 'docker.pkg.github.com/khorevaa/{{.ProjectName}}:latest'
+    dockerfile: Dockerfile
+    binaries:
+      - unihexp
+    build_flag_templates:
+      - "--label=org.label-schema.schema-version=1.0"
+      - "--label=org.label-schema.version={{.Version}}"
+      - "--label=org.label-schema.name={{.ProjectName}}"
+      - "--label=com.github.actions.name={{.ProjectName}}"
+      - "--label=com.github.actions.description=Universal HEX patch binaries as fast and easily as possible"
+      - "--label=com.github.actions.icon=terminal"
+      - "--label=com.github.actions.color=blue"
+      - "--label=repository=http://github.com/khorevaa/unihexp"
+      - "--label=homepage=http://github.com/khorevaa/unihexp"
+      - "--label=maintainer=Aleksey Khorev <khorevaa@gmail.com>"
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     replacements:
@@ -43,3 +62,4 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
