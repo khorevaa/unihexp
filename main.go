@@ -23,12 +23,13 @@ var (
 )
 
 type file struct {
-	patch
-
 	File            string
 	DoBackup        bool `default:"true"`
-	ContinueOnError bool
+	ContinueOnError bool `default:"false"`
 	Patches         []patch
+
+	Old string
+	New string
 }
 
 type patch struct {
@@ -87,7 +88,7 @@ func (f file) Patch() error {
 
 		var errPatch error
 
-		if f.DoBackup {
+		if f.DoBackup && !checkFile {
 			errPatch = doBackup(fl)
 		}
 
@@ -102,7 +103,7 @@ func (f file) Patch() error {
 			continue
 		}
 
-		for _, p := range f.Patches {
+		for _, p := range patches {
 
 			fileBytes, errPatch = p.Patch(fileBytes)
 
@@ -114,6 +115,11 @@ func (f file) Patch() error {
 
 		if errPatch != nil && !f.ContinueOnError {
 			log.Error(errPatch.Error())
+			continue
+		}
+
+		if checkFile {
+			log.Infof("Patch file <%s> can be successful", fl)
 			continue
 		}
 
@@ -131,9 +137,17 @@ func (f file) Patch() error {
 }
 
 var Config = struct {
-	file
-	Files []file
+	File            string
+	DoBackup        bool `default:"true"`
+	ContinueOnError bool `default:"false"`
+	Old             string
+	New             string
+
+	Files   []file
+	Patches []patch
 }{}
+
+var checkFile bool
 
 func main() {
 
@@ -145,14 +159,20 @@ func main() {
 	App.StringOptPtr(&Config.Old, "src", "", "src hex string to replace")
 	App.StringOptPtr(&Config.New, "hex", "", "new hex string to replace")
 	App.StringOptPtr(&Config.File, "f file", "", "path to file")
+	App.BoolOptPtr(&checkFile, "check", false, "check file to patch")
 	App.BoolOptPtr(&Config.DoBackup, "b backup", true, "do backup patching file")
-	App.BoolOptPtr(&Config.ContinueOnError, "continue-on-error", true, "continue patch on error")
+	App.BoolOptPtr(&Config.ContinueOnError, "continue-on-error", false, "continue patch on error")
 	App.StringOptPtr(&config, "c config", "", "config file to patch")
 
 	App.Before = func() {
 
 		if len(config) > 0 {
-			_ = configor.Load(&Config, config)
+			err := configor.Load(&Config, config)
+
+			if err != nil {
+				failOnErr(err)
+			}
+
 		} else {
 			_ = configor.Load(&Config)
 		}
@@ -163,10 +183,18 @@ func main() {
 				File:            Config.File,
 				DoBackup:        Config.DoBackup,
 				ContinueOnError: Config.ContinueOnError,
-				patch: patch{
-					Old: Config.Old,
-					New: Config.New,
-				},
+				Old:             Config.Old,
+				New:             Config.New,
+			})
+		}
+
+		if len(Config.File) > 0 && len(Config.Patches) > 0 {
+
+			Config.Files = append(Config.Files, file{
+				File:            Config.File,
+				DoBackup:        Config.DoBackup,
+				ContinueOnError: Config.ContinueOnError,
+				Patches:         Config.Patches,
 			})
 		}
 
